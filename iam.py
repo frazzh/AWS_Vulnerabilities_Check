@@ -28,7 +28,7 @@ def run():
                 if response1:
                     count += 1
                     write_to_txt(
-                        f'User {each_user["UserName"]} has unrestricted access to the AWS Management Console.')
+                        f'[Vulnerability] User {each_user["UserName"]} has unrestricted access to the AWS Management Console.')
                 else:
                     write_to_txt("No user has access to the AWS management console")
         except Exception as e:
@@ -46,7 +46,7 @@ def run():
 
                 if not mfa_devices:
                     count += 1
-                    write_to_txt(f'Multi-factor authentication is not enabled for user {user["UserName"]}.')
+                    write_to_txt(f'[Vulnerability] Multi-factor authentication is not enabled for user {user["UserName"]}.')
                 else:
                     write_to_txt("MFA is enabled for all users and root account.")
 
@@ -70,7 +70,7 @@ def run():
             for event in events:
                 if event['Username'] == 'root':
                     count += 1
-                    write_to_txt('The AWS root account was used to log in.')
+                    write_to_txt('[Vulnerability] The AWS root account was used to log in recently.')
                     flag = 1
                     break
             if flag == 0:
@@ -86,7 +86,7 @@ def run():
             password_policy = response['PasswordPolicy']
             if not password_policy:
                 count += 1
-                write_to_txt("Headsup! No custom password policy set.")
+                write_to_txt("[Vulnerability] Headsup! No custom password policy set.")
 
             if password_policy['MinimumPasswordLength'] < 12:
                 write_to_txt('The minimum password length is less than 12 characters.')
@@ -105,7 +105,7 @@ def run():
 
         except iam.exceptions.NoSuchEntityException:
             count += 1
-            write_to_txt("Headsup! No custom password policy set.")
+            write_to_txt("[Vulnerability] Headsup! No custom password policy set.")
         except Exception as e:
             write_to_txt(f'Error: {e}')
 
@@ -125,7 +125,7 @@ def run():
                 if '"Effect": "Allow", "Action": "*", "Resource": "*"' in policy_document:
                     flag = 1
                     count += 1
-                    write_to_txt(f'Policy {policy["PolicyName"]} grants unrestricted access.')
+                    write_to_txt(f'[Vulnerability] Policy {policy["PolicyName"]} grants unrestricted access.')
             if flag == 0:
                 write_to_txt("No customer managed policy has admin permissions")
 
@@ -145,7 +145,7 @@ def run():
                 for policy in policies:
                     if 'AdministratorAccess' in policy['PolicyName']:
                         count += 1
-                        write_to_txt(f'The role {role["RoleName"]} has administrator access.')
+                        write_to_txt(f'[Vulnerability] The role {role["RoleName"]} has administrator access.')
 
         except Exception as e:
             write_to_txt(f'Error: {e}')
@@ -163,7 +163,7 @@ def run():
                 for policy in policies:
                     if 'AdministratorAccess' in policy['PolicyName']:
                         count += 1
-                        write_to_txt(f'The group {group["GroupName"]} has administrator access.')
+                        write_to_txt(f'[Vulnerability] The group {group["GroupName"]} has administrator access.')
         except Exception as e:
             write_to_txt(f'Error: {e}')
 
@@ -185,7 +185,7 @@ def run():
                         if (current_time - last_used).days < 30:
                             count += 1
                             write_to_txt(
-                                f'The access key for user {user["UserName"]} is active and has been used recently.')
+                                f'[Vulnerability] The access key for user {user["UserName"]} is active and has been used recently.')
                         else:
                             write_to_txt(
                                 f'Access key {access_key["AccessKeyId"]} has not been used for the last 30 days.')
@@ -204,14 +204,14 @@ def run():
                 if policy['CreateDate'].date() < (datetime.now() - timedelta(days=90)).date():
                     flag = 1
                     count += 1
-                    write_to_txt(f'The policy {policy["PolicyName"]} has not been updated in the last 90 days.')
+                    write_to_txt(f'[Vulnerability] The policy {policy["PolicyName"]} has not been updated in the last 90 days.')
             if flag == 0:
                 write_to_txt('No outdated policies')
 
         except Exception as e:
             write_to_txt(f'Error: {e}')
 
-    write_to_txt("\nIAM Vulnerability Check Results:\n")
+    write_to_txt("IAM Vulnerability Check Results:\n")
     detect_access_management_console()
     detect_mfa()
     detect_root_account_credentials()

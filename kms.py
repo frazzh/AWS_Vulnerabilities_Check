@@ -28,7 +28,7 @@ def check_kms_vulnerabilities():
         # Get key rotation status
         rotation_response = kms_client.get_key_rotation_status(KeyId=key_id)
         rotation_enabled = rotation_response['KeyRotationEnabled']
-        if rotation_enabled:
+        if not rotation_enabled:
             count += 1
 
         # Get key policy
@@ -45,16 +45,15 @@ def check_kms_vulnerabilities():
                 principal_value = statement['Principal'].get('AWS', '')
                 if principal_value == '*':
                     count += 1
-                    overly_permissive_warning = "Overly permissive key policy with Principal set to '*'."
+                    overly_permissive_warning = "Overly permissive key policy with Principal set to '*'"
 
         # Write results to text file
         write_to_txt(f"Key ID: {key_id}")
-        write_to_txt(f"Key Rotation Enabled: {rotation_enabled}")
-        write_to_txt(f"Overly Permissive Warning: {overly_permissive_warning}")
-
+        write_to_txt(f"{'Key Rotation Enabled'if rotation_enabled else '[Vulnerability] Key Rotation Disabled'}")
+        write_to_txt(f"[Vulnerability] Overly Permissive Warning: {overly_permissive_warning}")
 
 
 def run():
     check_kms_vulnerabilities()
-    write_to_txt(f'{count} vulnerabilities found')
+    write_to_txt(f'{count - 1} vulnerabilities found\n')
     print(f'KMS Checks Completed')

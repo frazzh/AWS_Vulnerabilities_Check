@@ -45,7 +45,7 @@ def check_public_s3_buckets():
 
     if public_buckets:
         count += 1
-        write_to_txt(f'Public S3 Buckets: {public_buckets}')
+        write_to_txt(f'[Vulnerability] Public S3 Buckets: {public_buckets}')
     else:
         write_to_txt("No buckets public")
 
@@ -68,7 +68,7 @@ def check_encryption_s3_buckets():
 
     if unencrypted_buckets:
         count += 1
-        write_to_txt(f'Unencrypted S3 Buckets: {unencrypted_buckets}')
+        write_to_txt(f'[Vulnerability] Unencrypted S3 Buckets: {unencrypted_buckets}')
     else:
         write_to_txt('Server side encryption is enabled for all buckets')
 
@@ -89,7 +89,6 @@ def check_versioning_s3_buckets():
             versioning_disabled_buckets.append(bucket_name)
 
     if versioning_disabled_buckets:
-        count += 1
         write_to_txt(f'Versioning Disabled S3 Buckets: {versioning_disabled_buckets}')
     else:
         write_to_txt("Versioning is enabled for all buckets")
@@ -112,7 +111,7 @@ def check_logging_s3_buckets():
 
     if logging_disabled_buckets:
         count += 1
-        write_to_txt(f'Logging Disabled S3 Buckets: {logging_disabled_buckets}')
+        write_to_txt(f'[Vulnerability] Logging Disabled S3 Buckets: {logging_disabled_buckets}')
     else:
         write_to_txt('Logging is enabled for all buckets')
 

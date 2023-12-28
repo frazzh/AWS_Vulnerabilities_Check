@@ -1,10 +1,9 @@
 import boto3
-import csv
 import re
 
 count = 0
 
-session = boto3.session.Session(profile_name="default", region_name="us-east-1")
+session = boto3.session.Session(profile_name="default")
 
 
 def get_aws_region():
@@ -16,7 +15,7 @@ def check_dynamodb_security(table_name, region, file_writer):
     global count
     # Create a DynamoDB client
     dynamodb = session.client('dynamodb', region_name=region)
-
+    file_writer.write(f'DynamoDB Vulnerability Check Results:\n\n')
     # Check table existence
     try:
         file_writer.write(f'Table Name: {table_name}\n')
@@ -25,16 +24,15 @@ def check_dynamodb_security(table_name, region, file_writer):
         print(f"Table '{table_name}' not found.")
         return
 
-    # Check if encryption at rest is enabled
     encryption_at_rest = "Not enabled"
     if 'SSEDescription' in table_description['Table']:
         encryption_at_rest = table_description['Table']['SSEDescription']['Status']
 
     # Write Encryption at rest information to text file
-    if (encryption_at_rest):
+    if not encryption_at_rest:
         count += 1
     file_writer.write(
-        f"Encryption at rest: {encryption_at_rest}\n")
+        f"{'Encryption at rest: Enabled\n' if encryption_at_rest else '[Vulnerability] Encryption at rest: Disabled\n'}")
 
     # Extract IAM role name from table ARN
     role_name = None
@@ -54,19 +52,22 @@ def check_dynamodb_security(table_name, region, file_writer):
                                                                                            'Not enabled')
 
     # Write PITR status information to text file
-    if pitr_status:
+    if not pitr_status:
         count += 1
     file_writer.write(
-        f"Point-in-time Recovery: {pitr_status}\n")
+        f"{'Point-in-time Recovery: Enabled\n' if pitr_status else '[Vulnerability] Point-in-time Recovery: Disabled\n'}")
+
 
     # Check if Time To Live (TTL) is enabled
     ttl_status = table_description['Table'].get('TimeToLiveDescription', {}).get('TimeToLiveStatus', 'Not enabled')
 
     # Write TTL status information to text file
-    if ttl_status:
+    if not ttl_status:
         count += 1
     file_writer.write(
-        f"Time To Live (TTL): {ttl_status}\n")
+        f"{'Time To Live (TTL): Enabled\n' if ttl_status else '[Vulnerability] Time To Live (TTL): Disabled\n'}")
+
+
 
     # Check if the table has global secondary indexes
     gsi_present = 'No'
@@ -74,11 +75,12 @@ def check_dynamodb_security(table_name, region, file_writer):
         gsi_present = 'Yes'
 
     # Write GSI presence information to text file
-    if gsi_present:
+    if not gsi_present:
         count += 1
     file_writer.write(
-        f"Global Secondary Indexes (GSIs) present: {gsi_present}\n")
-    file_writer.write(f'{count} vulnerabilities found')
+        f"{'Global Secondary Indexes (GSIs) present: True\n' if gsi_present else '[Vulnerability] Global Secondary Indexes (GSIs) present: False\n'}")
+
+    file_writer.write(f'{count} vulnerabilities found\n\n')
 
 
 def check_all_dynamodb_tables(region, file_path):
@@ -106,6 +108,3 @@ def run():
     # Check security for all DynamoDB tables and save the output to text file
     check_all_dynamodb_tables(aws_region, text_file_path)
     print(f"DynamoDB Checks Completed")
-
-
-run()

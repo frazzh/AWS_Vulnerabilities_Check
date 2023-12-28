@@ -6,10 +6,7 @@ count = 0
 
 def check_vpc_vulnerabilities():
     global count
-    # Initialize the EC2 client
     ec2_client = boto3.client('ec2')
-
-    # List all VPCs
     vpcs_response = ec2_client.describe_vpcs()
 
     # Create a list to store the data for each VPC
@@ -18,7 +15,7 @@ def check_vpc_vulnerabilities():
     for vpc in vpcs_response['Vpcs']:
         vpc_id = vpc['VpcId']
         vpc_data_list.append({'Warning': f'\nVPC ID: {vpc_id}'})
-        flag = 0  # Flag to check if any security group allows ingress from everywhere
+        flag = 0
 
         # Check for security groups allowing ingress from everywhere
         security_groups_response = ec2_client.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
@@ -28,7 +25,7 @@ def check_vpc_vulnerabilities():
                     if ip_range['CidrIp'] == '0.0.0.0/0':
                         count += 1
                         vpc_data_list.append(
-                            {'Warning': f"Security Group {sg['GroupId']} allows ingress traffic from everywhere."
+                            {'Warning': f"[Vulnerability] Security Group {sg['GroupId']} allows ingress traffic from everywhere."
                              })
                         break
                 break
@@ -41,7 +38,7 @@ def check_vpc_vulnerabilities():
                         entry['RuleAction'] == 'allow' and entry['Egress'] == False):
                     count += 1
                     vpc_data_list.append({
-                        'Warning': f"Network ACL {nacl['NetworkAclId']} has overly permissive rule."
+                        'Warning': f"[Vulnerability] Network ACL {nacl['NetworkAclId']} has overly permissive rule."
                     })
 
         # Check for default route table with unrestricted route
@@ -51,14 +48,9 @@ def check_vpc_vulnerabilities():
                 if route['DestinationCidrBlock'] == '0.0.0.0/0' and 'GatewayId' in route:
                     count += 1
                     vpc_data_list.append({
-                        'Warning': f"Default route in Route Table {route_table['RouteTableId']} is overly permissive."
+                        'Warning': f"[Vulnerability] Default route in Route Table {route_table['RouteTableId']} is overly permissive."
                     })
 
-        # # If any security group allows ingress from everywhere, print a summary warning
-        # if flag == 1:
-        #     print(f"VPC ID {vpc_id} has security groups allowing ingress traffic from everywhere. See TXT for details.")
-
-    # Write consolidated output to a single text file
     txt_filename = "Vulnerability_Check_Results.txt"
     with open(txt_filename, mode='a', newline='') as txt_file:
         txt_file.write(f'VPC Vulnerability Check Results:\n')
